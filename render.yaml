@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: gomi
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: TRUST_PROXY
+        value: "true"
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: APP_ORIGIN
+        sync: false
+      - key: TURN_URLS
+        sync: false
+      - key: TURN_SHARED_SECRET
+        sync: false
+    disk:
+      name: gomi-data
+      mountPath: /var/data
+      sizeGB: 1

@@ -2,6 +2,20 @@
 
 (() => {
   const $ = (id) => document.getElementById(id);
+  const icon = (name, className = '') => {
+    const paths = {
+      spark: '<path d="m12 3 1.7 6.3L20 11l-6.3 1.7L12 19l-1.7-6.3L4 11l6.3-1.7L12 3Z"/>',
+      refresh: '<path d="M20 7v5h-5M4 17v-5h5M5.5 9a7 7 0 0 1 11.8-2L20 12M4 12l2.7 5a7 7 0 0 0 11.8-2"/>',
+      arrow: '<path d="M7 17 17 7M7 7h10v10"/>',
+      mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/>',
+      micOff: '<path d="m3 3 18 18M9 9v3a3 3 0 0 0 5.1 2.1M15 9V5a3 3 0 0 0-5.8-1M5 11a7 7 0 0 0 12 4.9M12 18v4M8 22h8"/>',
+      camera: '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/>',
+      cameraOff: '<path d="m3 3 18 18M10 6h6a2 2 0 0 1 2 2v1l3-2v10l-3-2v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2"/>',
+      chat: '<path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 1 1 20 11.5Z"/>',
+      stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
+    };
+    return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths[name] || paths.spark}</svg>`;
+  };
   const state = {
     userId: null, socket: null, localStream: null, peerConnection: null,
     remoteUserId: null, pairId: null, initiator: false, pendingCandidates: [],
@@ -66,7 +80,7 @@
   }
 
   function clearChat() {
-    $('chatMessages').innerHTML = '<div class="chat-empty">Sapa teman ngobrolmu 👋</div>';
+    $('chatMessages').innerHTML = '<div class="chat-empty">Sapa teman ngobrolmu</div>';
   }
 
   async function loadConfig() {
@@ -163,7 +177,7 @@
       state.remoteUserId = null;
       setStatus('Sedang mencari teman...', 'Jangan tutup halaman ini. Kami sedang mencocokkanmu.', 'waiting');
       $('startBtn').disabled = false;
-      $('startBtn').innerHTML = '<span class="button-icon">⟳</span><span>Cari ulang</span><span class="button-arrow">↗</span>';
+      $('startBtn').innerHTML = `${icon('refresh', 'button-icon')}<span>Cari ulang</span>${icon('arrow', 'button-arrow')}`;
       $('connectionText').textContent = 'Menunggu pengguna lain untuk terhubung';
       setRemoteStatus('Mencari teman');
       setConnectedControls(false);
@@ -183,7 +197,7 @@
       setStatus('Kamu sudah menemukan teman!', 'Ucapkan halo dan mulai obrolan yang menyenangkan.', 'connected');
       setRemoteStatus('Terhubung', true);
       $('startBtn').disabled = false;
-      $('startBtn').innerHTML = '<span class="button-icon">✦</span><span>Mulai ngobrol</span><span class="button-arrow">↗</span>';
+      $('startBtn').innerHTML = `${icon('spark', 'button-icon')}<span>Mulai ngobrol</span>${icon('arrow', 'button-arrow')}`;
       $('connectionText').textContent = 'Peer ditemukan · Menyiapkan video';
       clearChat();
       setConnectedControls(true);
@@ -289,6 +303,8 @@
     updateMediaButtons();
     setConnectedControls(false);
     $('connectionText').textContent = 'Kamera dan mikrofon aktif';
+    $('permissionHelpBtn').classList.add('hidden');
+    $('localVideo').play().catch(() => {});
   }
 
   async function createPeerConnection() {
@@ -359,8 +375,23 @@
       console.error(error);
       state.startingMatch = false;
       $('startBtn').disabled = false;
-      toast(error.name === 'NotAllowedError' ? 'Izin kamera/mikrofon ditolak. Aktifkan izin di browser.' : (error.message || 'Tidak dapat memulai sesi.'));
-      setStatus('Belum bisa terhubung', 'Izinkan akses kamera dan mikrofon untuk melanjutkan.', 'idle');
+      if (error && ['NotAllowedError', 'SecurityError'].includes(error.name)) {
+        $('permissionHelpBtn').classList.remove('hidden');
+        setStatus('Izin kamera diblokir', 'Izinkan Kamera dan Mikrofon di pengaturan browser atau Android, lalu coba lagi.', 'error');
+        toast('Browser atau Android belum mengizinkan kamera/mikrofon.');
+      } else if (error && error.name === 'NotFoundError') {
+        setStatus('Kamera atau mikrofon tidak ditemukan', 'Pastikan perangkat memiliki kamera dan mikrofon yang aktif.', 'error');
+        toast('Perangkat kamera atau mikrofon tidak ditemukan.');
+      } else if (error && error.name === 'NotReadableError') {
+        setStatus('Kamera sedang digunakan', 'Tutup aplikasi lain yang sedang memakai kamera, lalu coba lagi.', 'error');
+        toast('Kamera sedang dipakai aplikasi lain.');
+      } else if (error && error.name === 'OverconstrainedError') {
+        setStatus('Pengaturan kamera tidak cocok', 'Coba gunakan kamera lain atau mulai ulang browser.', 'error');
+        toast('Browser tidak dapat memakai konfigurasi kamera ini.');
+      } else {
+        setStatus('Koneksi belum siap', error.message || 'Periksa koneksi internet dan coba lagi.', 'error');
+        toast(error.message || 'Tidak dapat memulai sesi.');
+      }
     }
   }
 
@@ -390,7 +421,7 @@
     $('localVideo').srcObject = null;
     $('localPlaceholder').classList.remove('hidden');
     $('startBtn').disabled = false;
-    $('startBtn').innerHTML = '<span class="button-icon">✦</span><span>Mulai ngobrol</span><span class="button-arrow">↗</span>';
+    $('startBtn').innerHTML = `${icon('spark', 'button-icon')}<span>Mulai ngobrol</span>${icon('arrow', 'button-arrow')}`;
     setConnectedControls(false);
     updateMediaButtons();
     setStatus('Kamu sedang offline', 'Tekan mulai kapan saja untuk mencari teman.', 'idle');
@@ -400,9 +431,9 @@
 
   function updateMediaButtons() {
     $('muteBtn').classList.toggle('active', !state.microphoneEnabled);
-    $('muteBtn').innerHTML = `<span class="utility-icon">${state.microphoneEnabled ? '♬' : '♩'}</span><span>${state.microphoneEnabled ? 'Mute' : 'Unmute'}</span>`;
+    $('muteBtn').innerHTML = `${icon(state.microphoneEnabled ? 'mic' : 'micOff', 'utility-icon')}<span>${state.microphoneEnabled ? 'Mute' : 'Unmute'}</span>`;
     $('cameraBtn').classList.toggle('active', !state.cameraEnabled);
-    $('cameraBtn').innerHTML = `<span class="utility-icon">◉</span><span>${state.cameraEnabled ? 'Kamera' : 'Video off'}</span>`;
+    $('cameraBtn').innerHTML = `${icon(state.cameraEnabled ? 'camera' : 'cameraOff', 'utility-icon')}<span>${state.cameraEnabled ? 'Kamera' : 'Video off'}</span>`;
   }
 
   function toggleMicrophone() {
@@ -462,6 +493,10 @@
     $('muteBtn').addEventListener('click', toggleMicrophone);
     $('cameraBtn').addEventListener('click', toggleCamera);
     $('stopBtn').addEventListener('click', stopSession);
+    $('permissionHelpBtn').addEventListener('click', () => showModal('permissionHelpModal'));
+    $('closePermissionHelpBtn').addEventListener('click', () => closeModal('permissionHelpModal'));
+    $('permissionHelpDone').addEventListener('click', () => closeModal('permissionHelpModal'));
+    $('permissionHelpModal').addEventListener('click', (event) => { if (event.target === $('permissionHelpModal')) closeModal('permissionHelpModal'); });
     $('chatBtn').addEventListener('click', () => {
       $('chatDrawer').classList.add('open');
       $('chatDrawer').setAttribute('aria-hidden', 'false');

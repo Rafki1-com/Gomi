@@ -1,4 +1,4 @@
-# Gomi — Platform Random Video Chat V1
+# Gomi — Platform Random Video Chat V1.1
 
 Gomi adalah aplikasi web full-stack untuk obrolan video acak satu lawan satu. Proyek ini menggunakan Node.js native HTTP/WebSocket, WebRTC untuk media video/audio, serta penyimpanan JSON untuk data moderasi. Tidak ada dependency npm pihak ketiga yang perlu diunduh.
 
@@ -6,6 +6,8 @@ Gomi adalah aplikasi web full-stack untuk obrolan video acak satu lawan satu. Pr
 
 - Pencocokan pengguna acak satu lawan satu dengan filter negara dua arah.
 - Video dan audio langsung antar perangkat menggunakan WebRTC.
+- UI responsif dengan ikon SVG konsisten dan kontrol yang lebih mudah dibaca.
+- Panduan izin kamera/mikrofon di dalam aplikasi serta pesan error yang dibedakan berdasarkan penyebab browser.
 - Pilihan negara pengguna dan negara teman yang dicari; tidak menggunakan GPS.
 - Lewati/cari teman lain, mute mikrofon, matikan kamera, dan keluar sesi.
 - Chat teks real-time selama sesi.

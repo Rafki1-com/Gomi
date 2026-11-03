@@ -202,10 +202,10 @@ async function handleHttp(req, res) {
   }
 
   if (pathname === '/api/health' && req.method === 'GET') {
-    return sendJson(res, 200, { ok: true, app: 'Gomi', version: '1.0.0', timestamp: new Date().toISOString() });
+    return sendJson(res, 200, { ok: true, app: 'Gomi', version: '1.1.0', timestamp: new Date().toISOString() });
   }
   if (pathname === '/api/config' && req.method === 'GET') {
-    return sendJson(res, 200, { name: 'Gomi', version: '1.0.0', iceServers: makeIceServers(), countries: Array.from(COUNTRY_CODES) });
+    return sendJson(res, 200, { name: 'Gomi', version: '1.1.0', iceServers: makeIceServers(), countries: Array.from(COUNTRY_CODES) });
   }
 
   if (pathname.startsWith('/api/admin/')) {
